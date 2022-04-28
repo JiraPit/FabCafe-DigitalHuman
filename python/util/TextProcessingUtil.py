@@ -1,5 +1,6 @@
 #<import>
 import pythainlp as pyth
+import pandas as pd
 try:
     from typing import List
 except:
@@ -21,6 +22,15 @@ def GetSyllables(text : str) -> List[str]:
     return result
 
 def GetPart(syl : str) -> List[dict]:
+    knownWordsDf = pd.read_csv("data/known_words.csv")
+    if(any(knownWordsDf['syl'].isin([syl]))):
+        sylDf = knownWordsDf[knownWordsDf["syl"] == syl]
+        sylDf = sylDf.reset_index()
+        return [{
+            "init":sylDf["init"][0],
+            "vowel":sylDf["vowel"][0],
+            "final":sylDf["final"][0] if str(sylDf["final"][0]) != "nan" else "",
+        }]
     result = []
     used_vowel = []
     for letter in syl:
@@ -29,7 +39,7 @@ def GetPart(syl : str) -> List[dict]:
             syl = syl.replace(syl[index-1]+letter,"")
             continue
         if (letter == "็"):
-            index = syl.find(letter)
+            syl = syl.replace(letter,"")
             continue
         if (letter in TONES):
             syl = syl.replace(letter,"")
@@ -39,7 +49,7 @@ def GetPart(syl : str) -> List[dict]:
             used_vowel.append(letter)
     if ("รร" in syl[1:]):
         used_vowel.append("รร")
-    print(f"Processed Syllable: {syl} \nUsed Vowels: {used_vowel} ({len(used_vowel)})")
+    print(f"Processing Syllable: {syl} \nUsed Vowels: {used_vowel} ({len(used_vowel)})")
     if (len(used_vowel) == 0):
         if("อ" in syl[1:]):
             used_vowel.append("อ")
@@ -131,11 +141,18 @@ def GetPart(syl : str) -> List[dict]:
                             "final":'',
                         })
                     else:
-                        result.append({
-                            "init":syl[1],
-                            "vowel":used_vowel[0],
-                            "final":syl[2],
-                        })
+                        if((syl[2] in ["ร","ล"])):
+                            result.append({
+                                "init":syl[1:],
+                                "vowel":used_vowel[0],
+                                "final":'',
+                            })
+                        else:
+                            result.append({
+                                "init":syl[1],
+                                "vowel":used_vowel[0],
+                                "final":syl[2],
+                            })
                 elif (len(syl)==4):
                     if (syl[3] == "อ"):
                         result.append({
