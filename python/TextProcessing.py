@@ -1,4 +1,3 @@
-from unittest import result
 import util.TextProcessingUtil as tpu
 import util.TextVerifyingUtil as tvu
 

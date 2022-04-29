@@ -10,7 +10,7 @@ except:
 #<define>
 VOWELS = list(pyth.thai_vowels)
 LETTERS = list(pyth.thai_consonants)
-TONES = list(pyth.thai_tonemarks)
+TONES = list(pyth.thai_tonemarks)   
 #</define>
 
 #<function>
@@ -22,7 +22,10 @@ def GetSyllables(text : str) -> List[str]:
     return result
 
 def GetPart(syl : str) -> List[dict]:
-    knownWordsDf = pd.read_csv("data/known_words.csv")
+    try:
+        knownWordsDf = pd.read_csv("data/known_words.csv")
+    except:
+        knownWordsDf = pd.read_csv("DigitalHuman-Speak/data/known_words.csv")
     if(any(knownWordsDf['syl'].isin([syl]))):
         sylDf = knownWordsDf[knownWordsDf["syl"] == syl]
         sylDf = sylDf.reset_index()
