@@ -14,14 +14,14 @@ TONES = list(pyth.thai_tonemarks)
 #</define>
 
 #<function>
-def isLead(vowel : str) -> bool: 
+def is_lead(vowel : str) -> bool:
     return vowel in list(pyth.thai_lead_vowels)
 
-def GetSyllables(text : str) -> List[str]:
+def get_text_syllables(text : str) -> List[str]:
     result = pyth.subword_tokenize(text, engine="ssg")
     return result
 
-def GetPart(syl : str) -> List[dict]:
+def get_text_parts(syl : str) -> List[dict]:
     try:
         knownWordsDf = pd.read_csv("data/known_words.csv")
     except:
@@ -118,7 +118,7 @@ def GetPart(syl : str) -> List[dict]:
                             "final":syl[v_index:],
                         })
                     else:
-                        result += GetPart(syl[0])
+                        result += get_text_parts(syl[0])
                         result.append(
                             {
                             "init":syl[1],
@@ -128,7 +128,7 @@ def GetPart(syl : str) -> List[dict]:
             else:
                 print("Error: too many letters")
     elif (len(used_vowel) == 1):
-        if (isLead(used_vowel[0])):
+        if (is_lead(used_vowel[0])):
             if(used_vowel[0]==syl[0]):
                 if (len(syl)==2):
                     result.append({
@@ -186,8 +186,8 @@ def GetPart(syl : str) -> List[dict]:
                 else:
                     print("Error: too many letters")   
             else:
-                result+=GetPart(syl[0])
-                result+=GetPart(syl[1:])
+                result+=get_text_parts(syl[0])
+                result+=get_text_parts(syl[1:])
         else:
             v_index = syl.find(used_vowel[0])
             if (len(syl) >= 3):
@@ -310,10 +310,10 @@ def GetPart(syl : str) -> List[dict]:
         print("ERROR: Too many vowels in a syllable")
     return result
 
-def TextProcess(text : str) -> List[dict]:
+def text_process(text : str) -> List[dict]:
     result = []
-    syllables = GetSyllables(text=text)
+    syllables = get_text_syllables(text=text)
     for syllable in syllables:
-        result += GetPart(syl=syllable)
+        result += get_text_parts(syl=syllable)
     return result
 #</function>

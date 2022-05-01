@@ -1,5 +1,7 @@
 #<import>
-import util.TextProcessingUtil as tpu
+import os
+os.chdir("C:/Users/pitak/Desktop/DigitalHuman-Speak")
+import script.util.TextProcessingUtil as tpu
 try:
     from typing import List
 except:
@@ -12,7 +14,7 @@ VERIFIED_VOWEL = []
 VERIFIED_FINAL = []
 #</define>
 
-def TextDictVerify(textDict : List[dict]) -> List[dict]:
+def text_dict_verify(textDict : List[dict]) -> List[dict]:
     result = []
     for sylDict in textDict:
         i,v,f = (sylDict["init"],sylDict["vowel"],sylDict["final"])
