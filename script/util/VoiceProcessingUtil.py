@@ -1,4 +1,3 @@
-import speech_recognition as sr
 import os
 os.chdir("C:/Users/pitak/Desktop/DigitalHuman-Speak")
 import script.util.TextProcessingUtil as tpu
@@ -13,6 +12,9 @@ MIC = sr.Microphone(1)
 RECOG = sr.Recognizer()
 AUDIO_MIC_PATH = "data/mic_audio.wav"
 AUDIO_RESULT_PATH = "data/result_audio.wav"
+
+RATE = 8000
+AMP_THRESHOLD = 0.1
 
 def get_voice_syllables(
     audio_path : str or None = None,
@@ -41,7 +43,6 @@ def get_voice_syllables(
         audio_path=audio_path if from_file else AUDIO_MIC_PATH)
     return cluster_times
 
-
 ##---------------------------------------------------------------------------------------
 
 def audio_from_mic():
@@ -65,11 +66,11 @@ def speech_to_text(speech : sr.AudioData):
     return text
 
 def load_audio_data(audio_path : str):
-    data, rate = librosa.load(audio_path, sr=1000)
+    data, rate = librosa.load(audio_path, sr=RATE)
     newdata = abs(data)
     cluster_data = []
     for i in range(len(newdata)):
-        if newdata[i] > 0.05:
+        if newdata[i] > AMP_THRESHOLD:
             cluster_data.append([i,newdata[i]])
     cluster_data = np.array(cluster_data)
     return cluster_data, int(rate)
@@ -110,7 +111,7 @@ def plot_wave_segmentation(cluster_times,rate,audio_path):
         ymin=30000,
         ymax=-30000,
         colors="r",
-        zorder=1)
+        zorder=2)
     plt.show()
     plt.savefig("wave_segmentation.png")
 
