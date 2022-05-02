@@ -7,35 +7,54 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy.io.wavfile as wav
 from sklearn.cluster import KMeans
+from hdbscan import HDBSCAN
 
 MIC = sr.Microphone(1)
 RECOG = sr.Recognizer()
 AUDIO_MIC_PATH = "data/mic_audio.wav"
 AUDIO_RESULT_PATH = "data/result_audio.wav"
 
-RATE = 8000
-AMP_THRESHOLD = 0.1
-
 def get_voice_syllables(
     audio_path : str or None = None,
     from_mic : bool or None = False,
-    from_file : bool or None = False):
+    from_file : bool or None = False,
+    algorithm : str or None = "hdbscan",
+    ):
+    #-verifying
     if(from_file and audio_path == None):
-        print("ERROR: No audio path specified")
-        return
+        return print("ERROR: No audio path specified")
+    if(algorithm not in ["hdbscan","kmeans"]):
+        return print("ERROR: unknown algorithm")
+    #-algorithm 1
+    if(algorithm == "kmeans"):
+        rate = 1000
+        amp_threshold=0.04
+    elif(algorithm == "hdbscan"):
+        rate = 8000
+        amp_threshold=0.1
+    #-init data from source
     if(from_mic):
         speech = audio_from_mic()
     elif(from_file):
         speech = audio_from_file(audio_path=audio_path)
     else:
-        print("ERROR: No source specified")
-        return
-    text = speech_to_text(speech=speech)
+        return print("ERROR: No source specified")
+    #-get text from speech
+    if algorithm == "kmeans":
+        text = speech_to_text(speech=speech)
+    #-load and pre-process
     data,rate = load_audio_data(
-                    audio_path= audio_path if from_file else AUDIO_MIC_PATH
+                    audio_path= audio_path if from_file else AUDIO_MIC_PATH,
+                    rate=rate,
+                    amp_threshold=amp_threshold,
                 )
-    clustered_data, label = kmeans_train(data=data,text=text)
+    #-algorithm
+    if(algorithm == "kmeans"):
+        clustered_data, label = kmeans_train(data=data,text=text)
+    elif(algorithm == "hdbscan"):
+        clustered_data, label = hdbscan_train(data=data)
     cluster_times = cluster_frame_data(clustered_data=clustered_data,label=label)
+    #-plot
     plot_cluster(clustered_data=clustered_data,label=label)
     plot_wave_segmentation(
         cluster_times=cluster_times,
@@ -65,12 +84,12 @@ def speech_to_text(speech : sr.AudioData):
     print(text)
     return text
 
-def load_audio_data(audio_path : str):
-    data, rate = librosa.load(audio_path, sr=RATE)
+def load_audio_data(audio_path : str, rate : int, amp_threshold : int):
+    data, rate = librosa.load(audio_path, sr=rate)
     newdata = abs(data)
     cluster_data = []
     for i in range(len(newdata)):
-        if newdata[i] > AMP_THRESHOLD:
+        if newdata[i] > amp_threshold:
             cluster_data.append([i,newdata[i]])
     cluster_data = np.array(cluster_data)
     return cluster_data, int(rate)
@@ -86,6 +105,14 @@ def kmeans_train(data, text : str):
     label = model.fit_predict(data)
     return data, label
 
+def hdbscan_train(data):
+    model = HDBSCAN(
+        min_cluster_size=51,
+        min_samples=None,
+        algorithm="best")
+    label = model.fit_predict(data)
+    return data, label
+
 def cluster_frame_data(clustered_data,label):
     u_labels = np.unique(label)
     cluster_times = []
@@ -95,23 +122,26 @@ def cluster_frame_data(clustered_data,label):
     
 def plot_cluster(clustered_data,label):
     u_labels = np.unique(label)
+    u_labels = np.delete(u_labels,np.where(u_labels==-1))
     plt.figure(figsize=(50,20))
     for i in u_labels:
         plt.scatter(clustered_data[label == i , 0] , clustered_data[label == i , 1] , label = i)
     plt.legend()
-    plt.show()
     plt.savefig("cluster.png")
+    plt.show()
 
 def plot_wave_segmentation(cluster_times,rate,audio_path):
     eva_rate, evawav = wav.read(audio_path)
     plt.figure(figsize=(30,8))
-    plt.plot(evawav,zorder=1)
+    plt.plot(evawav,zorder=2)
     plt.vlines(
         list(map(lambda e: int(e[0]*(eva_rate/rate)),cluster_times)),
         ymin=30000,
         ymax=-30000,
         colors="r",
-        zorder=2)
+        zorder=3)
+    for e in cluster_times:
+        plt.axvspan(e[0]*(eva_rate/rate),e[1]*(eva_rate/rate),color="lightgray",zorder=1)
     plt.show()
     plt.savefig("wave_segmentation.png")
 
