@@ -19,6 +19,9 @@ def get_voice_syllables(
     from_mic : bool or None = False,
     from_file : bool or None = False,
     algorithm : str or None = "hdbscan",
+    gen_voice : bool or None = False,
+    gen_voice_start : int or None = 0,
+    gen_voice_end : int or None = 0,
     ):
     #-verifying
     if(from_file and audio_path == None):
@@ -60,6 +63,15 @@ def get_voice_syllables(
         cluster_times=cluster_times,
         rate=rate,
         audio_path=audio_path if from_file else AUDIO_MIC_PATH)
+    #-generate sub-voice
+    if(gen_voice):
+        save_audio_data(
+            cluster_times=cluster_times,
+            audio_path=audio_path if from_file else AUDIO_MIC_PATH,
+            rate=rate,
+            start=gen_voice_start,
+            end=gen_voice_end,
+            )
     return cluster_times
 
 ##---------------------------------------------------------------------------------------
@@ -107,7 +119,7 @@ def kmeans_train(data, text : str):
 
 def hdbscan_train(data):
     model = HDBSCAN(
-        min_cluster_size=51,
+        min_cluster_size=40,
         min_samples=None,
         algorithm="best")
     label = model.fit_predict(data)
@@ -115,6 +127,7 @@ def hdbscan_train(data):
 
 def cluster_frame_data(clustered_data,label):
     u_labels = np.unique(label)
+    u_labels = np.delete(u_labels,np.where(u_labels==-1))
     cluster_times = []
     for i in u_labels:
         cluster_times.append([int(clustered_data[label == i , 0].min()),int(clustered_data[label == i , 0].max())])
@@ -136,8 +149,8 @@ def plot_wave_segmentation(cluster_times,rate,audio_path):
     plt.plot(evawav,zorder=2)
     plt.vlines(
         list(map(lambda e: int(e[0]*(eva_rate/rate)),cluster_times)),
-        ymin=30000,
-        ymax=-30000,
+        ymin=35000,
+        ymax=-35000,
         colors="r",
         zorder=3)
     for e in cluster_times:
@@ -145,8 +158,8 @@ def plot_wave_segmentation(cluster_times,rate,audio_path):
     plt.show()
     plt.savefig("wave_segmentation.png")
 
-def save_audio_data(cluster_times,rate,audio_path):
+def save_audio_data(cluster_times,rate,audio_path,start : int, end : str):
     eva_rate,evawav = wav.read(audio_path)
-    c = cluster_times[0]
-    e = cluster_times[14]
-    wav.write(AUDIO_RESULT_PATH,eva_rate,evawav[c[0]*int(eva_rate/rate):e[1]*int(eva_rate/rate)])
+    c = cluster_times[start]
+    e = cluster_times[end]
+    wav.write(AUDIO_RESULT_PATH,eva_rate,evawav[c[0]*int(eva_rate/rate):(e[1]*int(eva_rate/rate)+1)])
