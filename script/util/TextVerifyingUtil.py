@@ -1,6 +1,6 @@
 #<import>
-import os
-os.chdir("C:/Users/pitak/Desktop/DigitalHuman-Speak")
+import sys
+sys.path.append("C:/Users/pitak/Desktop/DigitalHuman-Speak")
 import script.util.TextProcessingUtil as tpu
 try:
     from typing import List

@@ -1,5 +1,5 @@
-import os
-os.chdir("C:/Users/pitak/Desktop/DigitalHuman-Speak")
+import sys
+sys.path.append("C:/Users/pitak/Desktop/DigitalHuman-Speak")
 import script.util.TextProcessingUtil as tpu
 import speech_recognition as sr
 import librosa
@@ -22,6 +22,8 @@ def get_voice_syllables(
     gen_voice : bool or None = False,
     gen_voice_start : int or None = 0,
     gen_voice_end : int or None = 0,
+    gen_plot : bool or None = False,
+    to_string : bool or None = False
     ):
     #-verifying
     if(from_file and audio_path == None):
@@ -51,28 +53,36 @@ def get_voice_syllables(
                     rate=rate,
                     amp_threshold=amp_threshold,
                 )
-    #-algorithm
+    #-algorithm 2
     if(algorithm == "kmeans"):
         clustered_data, label = kmeans_train(data=data,text=text)
     elif(algorithm == "hdbscan"):
         clustered_data, label = hdbscan_train(data=data)
-    cluster_times = cluster_frame_data(clustered_data=clustered_data,label=label)
+    cluster_ranges = get_cluster_frame(clustered_data=clustered_data,label=label)
     #-plot
-    plot_cluster(clustered_data=clustered_data,label=label)
-    plot_wave_segmentation(
-        cluster_times=cluster_times,
-        rate=rate,
-        audio_path=audio_path if from_file else AUDIO_MIC_PATH)
+    if (gen_plot):
+        plot_cluster(clustered_data=clustered_data,label=label)
+        plot_wave_segmentation(
+            cluster_times=cluster_ranges,
+            rate=rate,
+            audio_path=audio_path if from_file else AUDIO_MIC_PATH)
     #-generate sub-voice
     if(gen_voice):
         save_audio_data(
-            cluster_times=cluster_times,
+            cluster_ranges=cluster_ranges,
             audio_path=audio_path if from_file else AUDIO_MIC_PATH,
             rate=rate,
             start=gen_voice_start,
-            end=gen_voice_end,
-            )
-    return cluster_times
+            end=gen_voice_end)
+    cluster_S_ranges = frame_to_second(
+        cluster_ranges=cluster_ranges,
+        audio_path=audio_path if from_file else AUDIO_MIC_PATH,
+        rate=rate
+        )
+    if (to_string):
+        return clusters_to_string(cluster_S_ranges=cluster_S_ranges)
+    else:
+        return cluster_S_ranges
 
 ##---------------------------------------------------------------------------------------
 
@@ -125,14 +135,36 @@ def hdbscan_train(data):
     label = model.fit_predict(data)
     return data, label
 
-def cluster_frame_data(clustered_data,label):
+def get_cluster_frame(clustered_data,label):
     u_labels = np.unique(label)
     u_labels = np.delete(u_labels,np.where(u_labels==-1))
-    cluster_times = []
+    cluster_ranges = []
     for i in u_labels:
-        cluster_times.append([int(clustered_data[label == i , 0].min()),int(clustered_data[label == i , 0].max())])
-    return sorted(cluster_times)
-    
+        cluster_ranges.append([int(clustered_data[label == i , 0].min()),int(clustered_data[label == i , 0].max())])
+    return sorted(cluster_ranges)
+
+def get_cluster_frame(clustered_data,label):
+    u_labels = np.unique(label)
+    u_labels = np.delete(u_labels,np.where(u_labels==-1))
+    cluster_ranges = []
+    for i in u_labels:
+        cluster_ranges.append([int(clustered_data[label == i , 0].min()),int(clustered_data[label == i , 0].max())])
+    return sorted(cluster_ranges)
+
+def frame_to_second(cluster_ranges,audio_path,rate):
+    cluster_ranges = list(map(lambda x: [x[0]/rate,x[1]/rate],cluster_ranges))
+    return cluster_ranges
+
+def clusters_to_string(cluster_S_ranges):
+    result = ""
+    for S_range in cluster_S_ranges:
+        for S in S_range:
+            result += str(S)
+            result += ","
+        result += "/"
+    result = result.replace(",/","/")
+    return result
+#--------------------------------------------------------------------------------------------------   
 def plot_cluster(clustered_data,label):
     u_labels = np.unique(label)
     u_labels = np.delete(u_labels,np.where(u_labels==-1))
@@ -158,8 +190,9 @@ def plot_wave_segmentation(cluster_times,rate,audio_path):
     plt.show()
     plt.savefig("wave_segmentation.png")
 
-def save_audio_data(cluster_times,rate,audio_path,start : int, end : str):
+#----------------------------------------------------------------------------------------------------
+def save_audio_data(cluster_ranges,rate,audio_path,start : int, end : str):
     eva_rate,evawav = wav.read(audio_path)
-    c = cluster_times[start]
-    e = cluster_times[end]
+    c = cluster_ranges[start]
+    e = cluster_ranges[end]
     wav.write(AUDIO_RESULT_PATH,eva_rate,evawav[c[0]*int(eva_rate/rate):(e[1]*int(eva_rate/rate)+1)])
