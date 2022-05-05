@@ -187,12 +187,16 @@ def plot_wave_segmentation(cluster_times,rate,audio_path):
         zorder=3)
     for e in cluster_times:
         plt.axvspan(e[0]*(eva_rate/rate),e[1]*(eva_rate/rate),color="lightgray",zorder=1)
-    plt.show()
     plt.savefig("wave_segmentation.png")
+    plt.show()
+    
 
 #----------------------------------------------------------------------------------------------------
 def save_audio_data(cluster_ranges,rate,audio_path,start : int, end : str):
     eva_rate,evawav = wav.read(audio_path)
+    silence,silence_rate = librosa.load("data/Test/silence.wav", sr=eva_rate)
     c = cluster_ranges[start]
     e = cluster_ranges[end]
-    wav.write(AUDIO_RESULT_PATH,eva_rate,evawav[c[0]*int(eva_rate/rate):(e[1]*int(eva_rate/rate)+1)])
+    print(f"Creating voice from frame {c[0]} to {e[1]}")
+    dataToWrite = np.concatenate((silence,evawav[c[0]*int(eva_rate/rate):(e[1]*int(eva_rate/rate))],silence))
+    wav.write(AUDIO_RESULT_PATH,eva_rate,dataToWrite)
