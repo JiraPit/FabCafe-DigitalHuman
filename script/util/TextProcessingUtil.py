@@ -1,4 +1,6 @@
 #<import>
+import sys
+sys.path.append("C:/Users/pitak/Desktop/DigitalHuman-Speak")
 import pythainlp as pyth
 import pandas as pd
 try:
@@ -22,10 +24,7 @@ def get_text_syllables(text : str) -> List[str]:
     return result
 
 def get_text_parts(syl : str) -> List[dict]:
-    try:
-        knownWordsDf = pd.read_csv("data/known_words.csv")
-    except:
-        knownWordsDf = pd.read_csv("DigitalHuman-Speak/data/known_words.csv")
+    knownWordsDf = pd.read_csv("data/known_words.csv")
     if(any(knownWordsDf['syl'].isin([syl]))):
         sylDf = knownWordsDf[knownWordsDf["syl"] == syl]
         sylDf = sylDf.reset_index()
@@ -52,7 +51,6 @@ def get_text_parts(syl : str) -> List[dict]:
             used_vowel.append(letter)
     if ("รร" in syl[1:]):
         used_vowel.append("รร")
-    print(f"Processing Syllable: {syl} \nUsed Vowels: {used_vowel} ({len(used_vowel)})")
     if (len(used_vowel) == 0):
         if("อ" in syl[1:]):
             used_vowel.append("อ")

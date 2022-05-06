@@ -103,7 +103,6 @@ def audio_from_file(audio_path):
 
 def speech_to_text(speech : sr.AudioData):
     text = RECOG.recognize_google(speech,language='th')
-    print(text)
     return text
 
 def load_audio_data(audio_path : str, rate : int, amp_threshold : int):
@@ -197,6 +196,5 @@ def save_audio_data(cluster_ranges,rate,audio_path,start : int, end : str):
     silence,silence_rate = librosa.load("data/Test/silence.wav", sr=eva_rate)
     c = cluster_ranges[start]
     e = cluster_ranges[end]
-    print(f"Creating voice from frame {c[0]} to {e[1]}")
     dataToWrite = np.concatenate((silence,evawav[c[0]*int(eva_rate/rate):(e[1]*int(eva_rate/rate))],silence))
     wav.write(AUDIO_RESULT_PATH,eva_rate,dataToWrite)
