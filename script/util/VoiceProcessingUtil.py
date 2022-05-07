@@ -128,7 +128,7 @@ def kmeans_train(data, text : str):
 
 def hdbscan_train(data):
     model = HDBSCAN(
-        min_cluster_size=40,
+        min_cluster_size=50,
         min_samples=None,
         algorithm="best")
     label = model.fit_predict(data)
