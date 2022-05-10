@@ -1,5 +1,5 @@
 import sys
-sys.path.append("C:/Users/pitak/Desktop/DigitalHuman-Speak")
+sys.path.append("E:\Data\Jira02\Assets\Python\DigitalHuman-Speak")
 import script.util.TextProcessingUtil as tpu
 import speech_recognition as sr
 import librosa
@@ -23,7 +23,9 @@ def get_voice_syllables(
     gen_voice_start : int or None = 0,
     gen_voice_end : int or None = 0,
     gen_plot : bool or None = False,
-    to_string : bool or None = False
+    to_string : bool or None = False,
+    amp_filter : float or None = 0,
+    min_cluster_size : int or None = 50,
     ):
     #-verifying
     if(from_file and audio_path == None):
@@ -31,12 +33,21 @@ def get_voice_syllables(
     if(algorithm not in ["hdbscan","kmeans"]):
         return print("ERROR: unknown algorithm")
     #-algorithm 1
-    if(algorithm == "kmeans"):
-        rate = 1000
-        amp_threshold=0.04
-    elif(algorithm == "hdbscan"):
-        rate = 8000
-        amp_threshold=0.1
+    if(amp_filter<=0):
+        if(algorithm == "kmeans"):
+            rate = 1000
+            amp_threshold=0.04
+        elif(algorithm == "hdbscan"):
+            rate = 44100
+            amp_threshold=0.1
+    else:
+        if(algorithm == "kmeans"):
+            rate = 1000
+            amp_threshold=amp_filter
+        elif(algorithm == "hdbscan"):
+            rate = 44100
+            amp_threshold=amp_filter
+
     #-init data from source
     if(from_mic):
         speech = audio_from_mic()
@@ -57,7 +68,7 @@ def get_voice_syllables(
     if(algorithm == "kmeans"):
         clustered_data, label = kmeans_train(data=data,text=text)
     elif(algorithm == "hdbscan"):
-        clustered_data, label = hdbscan_train(data=data)
+        clustered_data, label = hdbscan_train(data=data,min_cluster_size=min_cluster_size)
     cluster_ranges = get_cluster_frame(clustered_data=clustered_data,label=label)
     #-plot
     if (gen_plot):
@@ -126,9 +137,9 @@ def kmeans_train(data, text : str):
     label = model.fit_predict(data)
     return data, label
 
-def hdbscan_train(data):
+def hdbscan_train(data,min_cluster_size):
     model = HDBSCAN(
-        min_cluster_size=50,
+        min_cluster_size=min_cluster_size,
         min_samples=None,
         algorithm="best")
     label = model.fit_predict(data)

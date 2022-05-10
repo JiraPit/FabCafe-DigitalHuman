@@ -1,6 +1,6 @@
 #<import>
 import sys
-sys.path.append("C:/Users/pitak/Desktop/DigitalHuman-Speak")
+sys.path.append("E:\Data\Jira02\Assets\Python\DigitalHuman-Speak")
 import script.util.TextProcessingUtil as tpu
 try:
     from typing import List

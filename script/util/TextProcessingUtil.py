@@ -1,6 +1,6 @@
 #<import>
 import sys
-sys.path.append("C:/Users/pitak/Desktop/DigitalHuman-Speak")
+sys.path.append("E:\Data\Jira02\Assets\Python\DigitalHuman-Speak")
 import pythainlp as pyth
 import pandas as pd
 try:
@@ -123,8 +123,6 @@ def get_text_parts(syl : str) -> List[dict]:
                             "vowel":"โ",
                             "final":syl[2],
                             })
-            else:
-                print("Error: too many letters")
     elif (len(used_vowel) == 1):
         if (is_lead(used_vowel[0])):
             if(used_vowel[0]==syl[0]):
@@ -180,9 +178,7 @@ def get_text_parts(syl : str) -> List[dict]:
                             "init":syl[1],
                             "vowel":used_vowel[0],
                             "final":syl[2:],
-                        })
-                else:
-                    print("Error: too many letters")   
+                        }) 
             else:
                 result+=get_text_parts(syl[0])
                 result+=get_text_parts(syl[1:])
@@ -304,8 +300,6 @@ def get_text_parts(syl : str) -> List[dict]:
                     "vowel":"เือ",
                     "final":syl[v_index[2]+3:],
                 })
-    else:
-        print("ERROR: Too many vowels in a syllable")
     return result
 
 def text_process(text : str) -> List[dict]:
@@ -313,5 +307,7 @@ def text_process(text : str) -> List[dict]:
     syllables = get_text_syllables(text=text)
     for syllable in syllables:
         result += get_text_parts(syl=syllable)
+    # print(str(syllables))
+    # print(result)
     return result
 #</function>
